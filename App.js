@@ -5,7 +5,7 @@ import * as React from 'react';
 
 import Splash from './screens/Splash';
 
-
+import('./ReactotronConfig').then(() => console.log('Reactotron Configured'))
 
 const Stack = createNativeStackNavigator();
 

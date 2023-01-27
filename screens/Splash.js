@@ -1,9 +1,33 @@
-import React from 'react';
+import { getAnalytics } from 'firebase/analytics';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import React, { useState } from 'react';
 import { Image, KeyboardAvoidingView, Text, TextInput, TouchableOpacity } from 'react-native';
 
+import { app } from '../App';
 import colors from '../colors';
+import { auth } from '../firebaseConfig';
 
+const analytics = getAnalytics(app);
+
+const createUser = (auth, email, password) => {
+	createUserWithEmailAndPassword(auth, email, password)
+		.then((userCredential) => {
+			// Signed in
+			const user = userCredential.user;
+			alert('User created', user);
+			// ...
+		})
+		.catch((error) => {
+			const errorCode = error.code;
+			const errorMessage = error.message;
+			// ..
+			Alert.log(errorCode, errorMessage)
+		});
+};
 const Splash = () => {
+
+	const [email, setEmail] = useState(0);
+
 	return (
 		<KeyboardAvoidingView style={styles.container} >
 			<Image
@@ -15,8 +39,10 @@ const Splash = () => {
 				style={styles.input}
 				placeholder="Nome della squadra"
 				keyboardType="default"
+				onChangeText={(text) => setEmail(text)}
+				value={email}
 			/>
-			<TouchableOpacity style={styles.button} onPress={() => alert('Button pressed')}>
+			<TouchableOpacity style={styles.button} onPress={() => { createUser(auth, email, 'Test123!') }}>
 				<Text style={styles.buttonText}> Entra </Text>
 			</TouchableOpacity>
 		</KeyboardAvoidingView>
