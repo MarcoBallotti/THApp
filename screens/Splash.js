@@ -2,6 +2,7 @@ import { getAnalytics } from 'firebase/analytics';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import { Image, KeyboardAvoidingView, Text, TextInput, TouchableOpacity } from 'react-native';
+import { showMessage } from 'react-native-flash-message';
 
 import { app } from '../App';
 import colors from '../colors';
@@ -9,39 +10,61 @@ import { auth } from '../firebaseConfig';
 
 const analytics = getAnalytics(app);
 
-const createUser = (auth, email, password) => {
-	createUserWithEmailAndPassword(auth, email, password)
-		.then((userCredential) => {
-			// Signed in
-			const user = userCredential.user;
-			alert('User created', user);
-			// ...
-		})
-		.catch((error) => {
-			const errorCode = error.code;
-			const errorMessage = error.message;
-			// ..
-			Alert.log(errorCode, errorMessage)
-		});
-};
 
-const signinUser = (auth, email, password) => {
-	signInWithEmailAndPassword(auth, email, password)
-		.then((userCredential) => {
-			// Signed in
-			const user = userCredential.user;
-			alert('User signed in', user);
-			//navigate('Home');
-		})
-		.catch((error) => {
-			const errorCode = error.code;
-			const errorMessage = error.message;
-			// ..
-			Alert.log(errorCode, errorMessage)
-		});
-};
 
-const Splash = () => {
+const Splash = ({ navigation }) => {
+	const createUser = (auth, email, password) => {
+		createUserWithEmailAndPassword(auth, email, password)
+			.then((userCredential) => {
+				// Signed in
+				const user = userCredential.user;
+				showMessage({
+					message: "Utente creato, ora puoi accedere 🪄",
+					type: "success",
+					icon: 'auto',
+					duration: 5000,
+					autoHide: true,
+					position: 'top',
+				});
+			})
+			.catch((error) => {
+				const errorCode = error.code;
+				const errorMessage = error.message;
+				let humaneErrorMessage = errorMessage.replace('Firebase:', '');
+				if (humaneErrorMessage.includes('email-already-in-use')) {
+					humaneErrorMessage = 'Email già in uso';
+				}
+				showMessage({
+					message: "Errore nella creazione dell'utente: " + humaneErrorMessage,
+					type: "danger",
+					icon: 'auto',
+					duration: 5000,
+					autoHide: true,
+					position: 'top',
+				});
+			});
+	};
+
+	const signinUser = (auth, email, password) => {
+		signInWithEmailAndPassword(auth, email, password)
+			.then((userCredential) => {
+				// Signed in
+				const user = userCredential.user;
+				navigation.replace('Activities');
+			})
+			.catch((error) => {
+				const errorCode = error.code;
+				const errorMessage = error.message;
+				showMessage({
+					message: errorMessage,
+					type: "danger",
+					icon: 'auto',
+					duration: 5000,
+					autoHide: true,
+					position: 'top',
+				});
+			});
+	};
 
 	const [email, setEmail] = useState(0);
 	const [password, setPassword] = useState(0);
@@ -56,8 +79,9 @@ const Splash = () => {
 			<TextInput
 				style={styles.input}
 				placeholder="email"
-				keyboardType="default"
+				keyboardType="email-address"
 				onChangeText={(text) => setEmail(text)}
+				autoCapitalize="none"
 				value={email}
 			/>
 			<TextInput
@@ -65,11 +89,15 @@ const Splash = () => {
 				placeholder="password"
 				keyboardType="password"
 				secureTextEntry={true}
+				autoCapitalize="none"
 				onChangeText={(text) => setPassword(text)}
 				value={password}
 			/>
 			<TouchableOpacity style={styles.button} onPress={() => { signinUser(auth, email, password) }}>
 				<Text style={styles.buttonText}> Entra </Text>
+			</TouchableOpacity>
+			<TouchableOpacity style={[styles.button, { marginTop: 10, backgroundColor: colors.primary }]} onPress={() => { createUser(auth, email, password) }}>
+				<Text style={styles.buttonText}> Crea utente </Text>
 			</TouchableOpacity>
 		</KeyboardAvoidingView>
 	);
@@ -100,7 +128,6 @@ const styles = {
 	button: {
 		width: 300,
 		height: 44,
-		backgroundColor: colors.primary,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
